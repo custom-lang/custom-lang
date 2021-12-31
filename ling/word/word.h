@@ -4,7 +4,6 @@
 #include <initializer_list>
 #include <morpheme.h>
 
-using namespace std;
 
 class Word {
 private:
@@ -13,8 +12,8 @@ private:
   // string meaning;
   // enum for some POS
 
-  vector<Morpheme> morphemes;
-  string phonemic;  
+  std::vector<Morpheme> morphemes;
+  std::string phonemic;  
   int numMorphemes;
   
 public:
@@ -35,11 +34,11 @@ public:
     numMorphemes++;
   }
   
-  vector<Morpheme> getMorphemes() const {
+  std::vector<Morpheme> getMorphemes() const {
     return morphemes;
   }
   
-  string getPhonemic() const {
+  std::string getPhonemic() const {
     return phonemic;
   }
   
@@ -48,3 +47,5 @@ public:
   }
 
 }
+
+#endif
