@@ -12,6 +12,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <algorithm>
 #include <iomanip>
 
 #include "../ling/units/soundsystem.h"
@@ -20,12 +21,16 @@
 static RootMorph assim1(std::map<unsigned int, Consonant>&,
                         std::string, std::string, RootMorph&);
 
+static RootMorph assim2(std::map<unsigned int, Consonant>&,
+                        unsigned int, unsigned int, RootMorph&);
+
 static unsigned int convertID1(std::map<unsigned int, Consonant>&,
                                std::string, std::string, std::string);
 
 int main() {
 
     int numMorphs = 10;
+    unsigned int xI, yI;
 
     // Load soundsystem
     SoundSystem soundSystem("preset01");
@@ -50,6 +55,7 @@ int main() {
 
     // Prompt for values
     std::string x, y;
+    int choice = -1;
     while (x == "") {
         std::cout << "x: ";
         std::getline(std::cin, x);
@@ -72,11 +78,44 @@ int main() {
         }
     }
 
+    while (choice == -1) {
+        std::cout << "Enter an integer 1-2: ";
+        std::cin >> choice;
+
+        if(std::cin.fail()) {
+            std::cin.clear();
+            std::cin.ignore();
+
+            choice = -1;
+        } else if (choice != 1 && choice != 2) {
+            std::cout << "\nSelection must be 1-2, inclusive\n\n";
+
+            choice = -1;
+        }
+    }
+
+    /* Convert x and y to unsigned integers for algorithm 2
+     * Assumes conversion always works
+     */
+    std::replace(x.begin(), x.end(), 'x', '0');
+    std::replace(y.begin(), y.end(), 'x', '0');
+    xI = std::stoi(x, nullptr, 16);
+    yI = std::stoi(y, nullptr, 16);
+
 
     // Apply rule and print new morphemes
     std::cout << "\n\n/" << x << "/ --> [" << y << "] / _V or V_\n";
     for (int i = 0; i < numMorphs; i++) {
-        std::cout << "[" << assim1(consonants, x, y, morphs[i]).getPhonemic() << "] ";
+
+        switch(choice) {
+            case 1:
+                std::cout << "[" << assim1(consonants, x, y, morphs[i]).getPhonemic() << "] ";
+                break;
+            case 2:
+                std::cout << "[" << assim2(consonants, xI, yI, morphs[i]).getPhonemic() << "] ";
+                break;
+
+        }
     }
 
     std::cout << "\n";
@@ -112,8 +151,12 @@ static RootMorph assim1(std::map<unsigned int, Consonant>& consonants,
         // Create new onset and coda
         std::vector<Consonant> onset, coda;
 
+        // Get sizes
+        int onSize = oldOnset.size();
+        int coSize = oldCoda.size();
+
         // Apply rule on onset
-        for (int j = 0; j < static_cast<int>(oldOnset.size()); j++) {
+        for (int j = 0; j < onSize; j++) {
 
             // Convert id to string
             std::stringstream ss;
@@ -125,7 +168,7 @@ static RootMorph assim1(std::map<unsigned int, Consonant>& consonants,
         }
 
         // Apply rule on coda
-        for (int j = 0; j < static_cast<int>(oldCoda.size()); j++) {
+        for (int j = 0; j < coSize; j++) {
 
             // Convert id to string
             std::stringstream ss;
@@ -142,6 +185,100 @@ static RootMorph assim1(std::map<unsigned int, Consonant>& consonants,
 
     return output;
 }
+
+/**
+ * Algorithm 2
+ *
+ * Uses integers and bitwise operators to
+ * calculate the result of a phonological rule.
+ *
+ * x represents the ID of the phoneme affected by the rule
+ * y represents the ID of the phoneme that results from the rule
+ * The 0s in the ID are used to indicate that the digit at that
+ * index should be ignored.
+ * This allows for x and y to apply to natural classes of sounds, rather than specific phonemes.
+ *
+ * Consequentally, this algorithm will not work on features that evaluate
+ * to 0. For instance, voiceless = 0, bilabial = 0, plosive = 0.
+ *
+ * This cannot be avoided by adding 1 to certain indexes of an ID, since
+ * the maximum value of Manner and Place is 0xf.
+ *
+ * A possible fix so that this algorithm can be used is
+ * representing phoneme IDs with unsigned longs, allowing for
+ * Manner and Place to be represented by two indexes.
+ *
+ * Assumes x and y follow the format of a valid conosonant ID.
+ */
+static RootMorph assim2(std::map<unsigned int, Consonant>& consonants,
+                        unsigned int x, unsigned int y, RootMorph& input) {
+
+    RootMorph output;
+    int numSyl = input.getNumSyl();
+
+    // For each syllable in morpheme
+    for (int i = 0; i < numSyl; i++) {
+        // Grab old onset and coda
+        std::vector<Consonant> oldOnset = input.getSyllables()[i].getOnset();
+        std::vector<Consonant> oldCoda = input.getSyllables()[i].getCoda();
+
+        // Create new onset and coda
+        std::vector<Consonant> onset, coda;
+
+        // Get sizes
+        int onSize = oldOnset.size();
+        int coSize = oldCoda.size();
+
+        // Apply rule on onset
+        for (int j = 0; j < onSize; j++) {
+            unsigned int curID = input.getSyllables()[i].getOnset()[j].getId(), newID = 0xfffffff;
+
+            // Check if current ID matches the natural class denoted in x
+            if ((curID & x) == x) {
+
+                // Apply rule to current ID
+                newID = curID + (y - x);
+            }
+
+            /*
+             * Push phoneme to onset if resulting ID exists in the soundsystem
+             * else, push the old one.
+             */
+            if(consonants.find(newID) != consonants.end()) {
+                onset.push_back(consonants[newID]);
+            } else {
+                onset.push_back(consonants[curID]);
+            }
+        }
+
+        // Apply rule on coda
+        for (int j = 0; j < coSize; j++) {
+            unsigned int curID = input.getSyllables()[i].getCoda()[j].getId(), newID;
+
+            // Check if current ID matches the natural class denoted in x
+            if ((curID & x) == x) {
+
+                // Apply rule to current ID
+                newID = curID + (y - x);
+            }
+
+            /*
+             * Push phoneme to onset if resulting ID exists in the soundsystem
+             * else, push the old one.
+             */
+            if(consonants.find(newID) != consonants.end()) {
+                coda.push_back(consonants[newID]);
+            } else {
+                coda.push_back(consonants[curID]);
+            }
+        }
+        output.addSyllable(Syllable(onset, input.getSyllables()[i].getNucleus(),
+                                    coda, std::vector<Suprasegmental>()));
+    }
+
+    return output;
+}
+
 
 /*
  * Helper function for algorithm 1
