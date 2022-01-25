@@ -1,6 +1,6 @@
 CXX = g++
 CXXFLAGS = -g -D_GLIBCXX_USE_C99=1 -std=c++11 -Wall
-PROGS = print_all phon_rules syl_gen gen_morph
+PROGS = print_all phon_rules syl_gen gen_morph assim_algos
 
 .PHONY: all clean
 
@@ -21,3 +21,5 @@ syl_gen: tests/syl_gen.o
 gen_morph: tests/gen_morph.o
 	$(CXX) $(CXXFLAGS) tests/gen_morph.cpp ling/word/*.cpp ling/units/*.cpp -o gen_morph
 
+assim_algos: tests/assim_algos.o
+	$(CXX) $(CXXFLAGS) tests/assim_algos.cpp ling/word/*.cpp ling/units/*.cpp -o assim_algos
