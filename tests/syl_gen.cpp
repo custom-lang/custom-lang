@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 
 #include "../ling/units/soundsystem.h"
 #include "../ling/word/syllable_gen.h"
@@ -15,10 +16,7 @@ int main() {
     std::array<int, 4> min = {0, 1, 0, 0};
 
     for (int i = 1; i <= 100; i++) {
-        std::cout << makeSyllable(soundSystem, max, min).getStrSyl() << " ";
-
-        if (i % 10 == 0)
-            std::cout << "\n";
+        std::cout << "/" << makeSyllable(soundSystem, max, min).getStrSyl() << "/\n";
     }
 
     return 0;

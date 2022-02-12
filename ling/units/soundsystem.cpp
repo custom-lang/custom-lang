@@ -4,58 +4,101 @@
 #include <fstream>
 #include <sstream>
 
+bool SoundSystem::isValidSym(std::string str) const {
+    if (str.length() > 0 && str.length() <= MAX_PHONEME_LENGTH
+        && str.find(" ") == std::string::npos) {
+
+        return true;
+    } else {
+        return false;
+    }
+}
+
 bool SoundSystem::save() {
-    std::ofstream phonemes("langs/" + name + "/phonemes.csv");
 
-    if (!phonemes.is_open()) {
-        return true;
-    }
-
+    // Do not overwrite file if the soundsystem no longer contains phonemes
     if (consonants.size() == 0 || vowels.size() == 0) {
-        std::cerr << "Cannot save " << name << " phonemes, consonants and/or vowels is empty.\n";
+        std::cerr << "Cannot save " << name << "'s phonemes, consonants and/or vowels is empty.\n";
         return true;
     }
 
-    phonemes << "symbol,id,onset weight,nucleus weight,coda weight,suprasegmental weight\n";
+    std::ofstream fSupras("langs/" + name + "/units/suprasegmentals.csv");
+    std::ofstream fConsonants("langs/" + name + "/units/consonants.csv");
+    std::ofstream fVowels("langs/" + name + "/units/vowels.csv");
+
+    // Do not progress if any of the files could not be opened
+    if (!fSupras.is_open() || !fConsonants.is_open() || !fVowels.is_open() ) {
+        return true;
+    }
+
+    fVowels << "symbol,id,nucleus weight\n";
+    fConsonants << "symbol,id,onset weight,nucleus weight,coda weight\n";
+    fSupras << "symbol,id,suprasegmental weight\n";
 
     // Save consonants
     for (auto const& phon: consonants) {
-        phonemes << phon.second.getSymbol() << ","
-                 << std::hex << phon.second.getId() << ","
-                 << std::dec << phon.second.getProbOnset() << ","
-                 << phon.second.getProbNucleus() << ","
-                 << phon.second.getProbCoda() << ",0\n";
+        fConsonants << phon.second.getSymbol() << ","
+                    << std::hex << phon.second.getId() << ","
+                    << std::dec << phon.second.getProbOnset() << ","
+                    << phon.second.getProbNucleus() << ","
+                    << phon.second.getProbCoda() << "\n";
     }
 
     // Save vowels
     for (auto const& phon: vowels) {
-        phonemes << phon.second.getSymbol() << ","
-                 << std::hex << phon.second.getId() << ",0,"
-                 << std::dec << phon.second.getProbNucleus() << ",0,0\n";
+        fVowels << phon.second.getSymbol() << ","
+                << std::hex << phon.second.getId() << ","
+                << std::dec << phon.second.getProbNucleus() << "\n";
     }
 
     // Save suprasegmentals
     for (auto const& seg: suprasegmentals) {
-        phonemes << seg.second.getSymbol() << ","
-                 << std::hex << seg.second.getId() << ",0,0,0,"
+        fSupras << seg.second.getSymbol() << ","
+                 << std::hex << seg.second.getId() << ","
                  << std::dec << seg.second.getProbSupra() << "\n";
     }
 
-    phonemes.close();
+    fSupras.close();
+    fConsonants.close();
+    fVowels.close();
+
     return false;
 }
 
 bool SoundSystem::load() {
-    std::ifstream phonemes("langs/" + name + "/phonemes.csv");
+    // Open all files
+    std::ifstream fSupras("langs/" + name + "/units/suprasegmentals.csv");
+    std::ifstream fConsonants("langs/" + name + "/units/consonants.csv");
+    std::ifstream fVowels("langs/" + name + "/units/vowels.csv");
 
-    if (!phonemes.is_open()) {
+    // Do not progress if any of the files could not be opened
+    if (!fSupras.is_open() || !fConsonants.is_open() || !fVowels.is_open() ) {
         return true;
     }
 
-    // Read each line in file
+    // Traverse Files
+    traverseFile(fSupras, 0);
+    traverseFile(fConsonants, 1);
+    traverseFile(fVowels, 2);
+
+    fSupras.close();
+    fConsonants.close();
+    fVowels.close();
+
+    return false;
+}
+
+void SoundSystem::traverseFile(std::ifstream& file, int type) {
     std::string line;
-    bool isFirst = true;
-    while (getline(phonemes, line)) {
+    bool isFirstLine = true;
+
+    // Check if type passed in is valid (0-2 inclusive)
+    if (type < 0 || type > 2) {
+        std::cerr << "Failed to traverse file, given type: " << type << "\n";
+        return;
+    }
+
+    while(getline(file, line)) {
         std::vector<std::string> tokens;
         std::stringstream ss(line);
         std::string token;
@@ -66,18 +109,22 @@ bool SoundSystem::load() {
         }
 
         // Ignore first line
-        if (isFirst) {
-            isFirst = false;
+        if (isFirstLine) {
+            isFirstLine = false;
             continue; // Skip to next line
         }
 
-        // Check if line has correct amount of values
-        if (tokens.size() != 6) {
+        /*
+         * Check if the line has the correct amount of values.
+         * Each file has at least 3 arguments per line.
+         * Extra values will be ignored and eventually deleted when writing over the file.
+         */
+        if (tokens.size() < 3) {
             std::cerr << "Invalid amount of values: " << tokens.size() << "\n";
             continue; // Skip to next line
         }
 
-        // Check if phoneme symbol is valid. If not, do not attempt to insert it.
+        // Check if the phoneme symbol is valid. If not, do not attempt to insert it.
         if (isValidSym(tokens[0]) == false) {
             std::cerr << "The symbol [" << tokens[0] << "] is invalid\n";
             continue; // Skip to next line
@@ -92,55 +139,59 @@ bool SoundSystem::load() {
             continue; // Skip to next line
         }
 
-        // Try to convert probabilities from string to float
-        float probOnset, probNucleus, probCoda, probSupra;
+        /*
+         * Try to convert weights from string to float
+         *
+         * For vowels:
+         *  weight1 = nucleus weight
+         * For consonants:
+         *  weight1 = onset weight
+         *  weight2 = nucleus weight
+         *  weight3 = coda weight
+         * For suprasegmentals:
+         *  weight1 = suprasegmental weight
+         */
+        float weight1, weight2, weight3;
         try {
-            probOnset = std::stof(tokens[2], nullptr);
-            probNucleus = std::stof(tokens[3], nullptr);
-            probCoda = std::stof(tokens[4], nullptr);
-            probSupra = std::stof(tokens[5], nullptr);
+            if (type == 1) {
+                weight1 = std::stof(tokens[2], nullptr);
+                weight2 = std::stof(tokens[3], nullptr); // NOTE: Will not be used until syllabic consonants are supported
+                weight3 = std::stof(tokens[4], nullptr);
+            } else {
+                weight1 = std::stof(tokens[2], nullptr);
+            }
         } catch (...) {
-            std::cerr << "Failed to convert probabilities for " + tokens[0] + " into floats\n";
+            std::cerr << "Failed to convert weight(s) for " + tokens[0] + " into float(s)\n";
             continue; // Skip to next line
         }
 
         // Insert based on type
-        if (id % 0x10 == static_cast<int>(Type::consonant)) {
-            if (insertConsonant(tokens[0], id, probOnset, probCoda)) {
-                std::cerr << "Could not add the consonant [" << tokens[0]
-                          << "] with id " << std::hex << id << "\n";
-            }
-        } else if (id % 0x10 == static_cast<int>(Type::vowel)) {
-            if (insertVowel(tokens[0], id, probNucleus)) {
-                std::cerr << "Could not add the vowel [" << tokens[0]
-                          << "] with id " << std::hex << id << "\n";
-            }
-        } else if (id % 0x10 == 0) {
-            if (insertSupra(tokens[0], id, probSupra)) {
+        if (type == 0) {
+            if (insertSupra(tokens[0], id, weight1)) {
                 std::cerr << "Could not add the suprasegmental [" << tokens[0]
                           << "] with id " << std::hex << id << "\n";
             }
+        } else if (type == 1) {
+            if (insertConsonant(tokens[0], id, weight1, weight2, weight3)) {
+                std::cerr << "Could not add the consonant [" << tokens[0]
+                          << "] with id " << std::hex << id << "\n";
+            }
         } else {
-            // ID does not denote a valid type, skip to next line
-            std::cerr << std::hex << id % 0x10 << " is not a valid type.\n";
+            if (insertVowel(tokens[0], id, weight1)) {
+                std::cerr << "Could not add the vowel [" << tokens[0]
+                          << "] with id " << std::hex << id << "\n";
+            }
         }
     }
-    phonemes.close();
-
-    return false;
 }
 
-bool SoundSystem::isValidSym(std::string str) const{
-    if (str.length() > 0 && str.length() <= MAX_PHONEME_LENGTH
-        && str.find(" ") == std::string::npos) {
+bool SoundSystem::insertConsonant(std::string symbol, unsigned int id, float probOnset, float probNucleus, float probCoda) {
 
+    // Check if consonant id
+    if (id % 0x10 != static_cast<int>(Type::consonant)) {
         return true;
-    } else {
-        return false;
     }
-}
 
-bool SoundSystem::insertConsonant(std::string symbol, unsigned int id, float probOnset, float probCoda) {
     // Get fields from id
     Place place = (Place)(id % 0x100 / 0x10);
     Manner manner = (Manner)(id % 0x1000 / 0x100);
@@ -162,7 +213,7 @@ bool SoundSystem::insertConsonant(std::string symbol, unsigned int id, float pro
         return true;
     } else {
         // Insert Consonant
-        Consonant consonant(symbol, probOnset, 0, probCoda,
+        Consonant consonant(symbol, probOnset, probNucleus, probCoda,
                             place, manner, voicing, coarticulation, articulation,
                             release, (bool)isSyllabic);
 
@@ -179,6 +230,12 @@ bool SoundSystem::insertConsonant(std::string symbol, unsigned int id, float pro
 }
 
 bool SoundSystem::insertVowel(std::string symbol, unsigned int id, float probNucleus) {
+
+    // Check if vowel id
+    if (id % 0x10 != static_cast<int>(Type::vowel)) {
+        return true;
+    }
+
     // Get fields from id
     Height height = (Height)(id % 0x100 / 0x10);
     Backness back = (Backness)(id % 0x1000 / 0x100);
@@ -210,6 +267,12 @@ bool SoundSystem::insertVowel(std::string symbol, unsigned int id, float probNuc
 }
 
 bool SoundSystem::insertSupra(std::string symbol, unsigned int id, float probSupra) {
+
+    // Check if suprasegmental id
+    if (id % 0x10 != 0) {
+        return true;
+    }
+
     // Get fields from id
     SupraType supraType = (SupraType)(id % 0x1000 / 0x10);
     Feature feature = Feature::intonation;

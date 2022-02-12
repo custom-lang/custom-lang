@@ -19,7 +19,7 @@ int main() {
 
         std::cout << std::string(m.isFree() ? "Free " : "Bound ")
                   << Morpheme::getStrMorphType(m.getMorphType())
-                  << " : " << m.getPhonemic() << " "
+                  << " : /" << m.getPhonemic() << "/ "
                   << Morpheme::getStrConLexCat(m.getLexCat()) << "\n";
     }
 
@@ -29,7 +29,7 @@ int main() {
     for (int i = 0; i < 5; i++) {
         FunctionMorph m = makeFuncMorph(soundSystem, max, min);
 
-        std::cout << Morpheme::getStrMorphType(m.getMorphType()) << " : " << m.getPhonemic() << " "
+        std::cout << Morpheme::getStrMorphType(m.getMorphType()) << " : /" << m.getPhonemic() << "/ "
                   << Morpheme::getStrFuncLexCat(m.getLexCat()) << "\n";
     }
 
@@ -39,7 +39,7 @@ int main() {
     for (int i = 0; i < 5; i++) {
         DerivationalAffix m = makeDerivAffix(soundSystem, max, min);
 
-        std::cout << Morpheme::getStrMorphType(m.getMorphType()) << " : " << m.getPhonemic() << " "
+        std::cout << Morpheme::getStrMorphType(m.getMorphType()) << " : /" << m.getPhonemic() << "/ "
                   << Morpheme::getStrConLexCat(m.getLexAttach()) << " | "
                   << Morpheme::getStrConLexCat(m.getLexChange())
                   << "\n";
@@ -51,7 +51,7 @@ int main() {
     for (int i = 0; i < 5; i++) {
         InflectionalAffix m = makeInflecAffix(soundSystem, max, min);
 
-        std::cout << Morpheme::getStrMorphType(m.getMorphType()) << " : " << m.getPhonemic() << " "
+        std::cout << Morpheme::getStrMorphType(m.getMorphType()) << " : /" << m.getPhonemic() << "/ "
                   << Morpheme::getStrConLexCat(m.getLexAttach()) << "\n";
     }
 

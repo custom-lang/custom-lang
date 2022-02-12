@@ -10,7 +10,7 @@
 
 #define MAX_PHONEME_LENGTH 10
 
-/* Represents all possible phonemes in a language */
+/* Represents all possible phonemes and suprasegmentals in a language */
 class SoundSystem {
 private:
     std::string name;
@@ -21,18 +21,28 @@ private:
     std::vector<unsigned int> onsetIds, nucleusIds, codaIds, supraIds;
     std::map<std::string, unsigned int> ids;    // Temporary, meant for testing
 
-    /* A phoneme symbol is valid if its length is between
-    * 1 and the MAX_PHONEME_LENGTH (inclusive), is not the empty string
-    * and does not contain spaces.
-    */
+    /*
+     * A phoneme symbol is valid if its length is between
+     * 1 and the MAX_PHONEME_LENGTH (inclusive), is not the empty string
+     * and does not contain spaces.
+     */
     bool isValidSym(std::string) const;
+
+    /*
+     * Traverse vowels.csv
+     * Type: Represents the contents of the file passed in (consonant, vowel, or suprasegmental)
+     *  0: Suprasegmental
+     *  1: Consonant
+     *  2: Vowel
+     */
+    void traverseFile(std::ifstream& file, int type);
 
     /*
      * Adds consonant to the soundSystem
      * Returns true if the consonant could not be added
      * Returns false if the consonant was successfully added
      */
-    bool insertConsonant(std::string, unsigned int, float, float);
+    bool insertConsonant(std::string, unsigned int, float, float, float);
 
     /*
      * Adds vowel to the soundSystem
