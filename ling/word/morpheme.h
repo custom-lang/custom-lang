@@ -43,6 +43,8 @@ protected:
 public:
     void addSyllable(Syllable syl) {
         syllables.push_back(syl);
+        // Add syllable breaks
+        numSyl > 0 ? phonemic += "." : phonemic += "";
         phonemic += syl.getStrSyl();
         numSyl++;
     }

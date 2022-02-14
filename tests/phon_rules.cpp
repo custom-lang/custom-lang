@@ -3,8 +3,8 @@
 #include "../ling/units/soundsystem.h"
 #include "../ling/word/root_morph.h"
 
-static RootMorph ruleVoicing(std::map<unsigned int,
-                             Consonant>&, RootMorph&);
+static RootMorph ruleVoicing(std::map<unsigned int, Consonant>&,
+                             RootMorph&);
 
 static std::vector<Consonant> applyVRule(std::vector<Consonant>&,
                                          std::map<unsigned int, Consonant>&);
