@@ -3,131 +3,122 @@
 
 #include "phoneme.h"
 
-/* Where obstruction occurs during consonant production */
-enum class Place {
-    bilabial,
-    labiodental,
-    dental,
-    alveolar,
-    postAlveolar,
-    retroflex,
-    labPalatal,     // Labialized Palatal
-    postalvVel,     // Postalveolar Velar
-    alvPalatal,     // Alveolo Palatal
-    palatal,
-    labialVelar,
-    velar,
-    uvular,
-    pharyngeal,
-    epiglottal,
-    glottal
+enum class Airstream {
+    pul_egr = 1,    // Pulmonic egressive (Pulmonic)
+    glo_egr,        // Glottallic egressive (Ejective)
+    glo_ing,        // Glottallic ingressive (Implosive)
+    vel_ing         // Velaric ingressive (Click)
 };
 
-/* How articulators are used during consonant production */
+/*
+ * Represents degree of closure,
+ * Ordered from full closure to no closure.
+ */
 enum class Manner {
-    plosive,
-    implosive,
-    ejective,
+    plosive = 1,
     nasal,
+    affricate,
+    fricative,
     trill,
     flap,
-    latFlap,
-    fricative,
-    latFricative,
-    ejecFricative,
-    ejecLatFricative,
-    affricate,
-    approximant,
-    latApproximant,
-    click,
-    latClick
+    liquid,
+    glide
 };
 
+/*
+ * Represents places of articulation
+ */
 enum class Articulation {
-    linguolabial = 1,
-    apical,
-    laminal,
-    advanced,
-    retracted,
-    centralized,
-    midCentralized,
-    raised,
-    lowered
+    lips_round = 1,     // Bilabial
+    lips_neutral,       // Bilabial
+    lips_drawn,         // Labiodental
+    blade_neutral,      // Dental
+    blade_grooved,      // Alveolar
+    blade_lateral,      // Alveolar
+    blade_laminal,      // Postalveolar
+    blade_retroflex,    // Retroflex
+    body_front,         // Palatal
+    body_central,       // Velar
+    body_back,          // Uvular
+    root_rtr,           // Pharyngeal (Retracted tongue root)
+    larynx              // Glottal
 };
 
 enum class Release {
     aspirated = 1,
-    nasalRel,
-    latRel,
-    noAudRel
+    nasal,
+    lateral,
+    nad             // No audible release
 };
 
+/* Represents a consonant */
 class Consonant : public Phoneme {
 private:
-    Place place;
+    // Consonant Features
+    Airstream airstream;
+    Articulation pri_art;       // Primary Articulation (Place)
+    Articulation sec_art;       // Secondary Articulation (Double or secondary articulation)
     Manner manner;
-    Voicing voicing;
-    Coarticulation coart;
-    Articulation art;
     Release release;
-    bool syllabic;
+
+    // Weights
     float probOnset;        // Probabilty of phoneme occuring in onset
     float probNucleus;      // Probabilty of phoneme occuring in nucleus if syllabic
     float probCoda;         // Probabilty of phoneme occuring in coda
 
-    std::string getStrPlace(Place) const;
-    std::string getStrManner(Manner) const;
-    std::string getStrArt(Articulation) const;
-    std::string getStrRel(Release) const;
+    unsigned int calc_id() const;
+
+    // Helpers for creating consonant description from features
+    std::string get_air_as_str(Airstream) const;
+    std::string get_art_as_str(Articulation) const;
+    std::string get_man_as_str(Manner) const;
+    std::string get_rel_as_str(Release) const;
+    std::string update_desc() const;
 public:
-    Consonant(std::string symbol, float probOnset, float probNucleus, float probCoda,
-              Place place, Manner manner, Voicing voicing, Coarticulation coart,
-              Articulation art, Release release, bool syllabic) {
+    Consonant(std::string symbol,
+              Airstream airstream, Articulation pri_art, Articulation sec_art,
+              Manner manner, Voicing voicing, Release release,
+              float probOnset, float probNucleus, float probCoda) {
 
         type = Type::consonant;
         this->symbol = symbol;
+        this->airstream = airstream;
+        this->pri_art = pri_art;
+        this->sec_art = sec_art;
+        this->manner = manner;
+        this->voicing = voicing;
+        this->release = release;
+
         this->probOnset = probOnset;
         this->probNucleus = probNucleus;
         this->probCoda = probCoda;
-        this->place = place;
-        this->manner = manner;
-        this->voicing = voicing;
-        this->coart = coart;
-        this->art = art;
-        this->release = release;
-        this->syllabic = syllabic;
 
-        // Syllabic|Release|Art|Coart|Voicing|Manner|Place|Type
-        id = (syllabic * 0x10000000) + (static_cast<int>(release) * 0x1000000) + (static_cast<int>(art) * 0x100000)
-             + (static_cast<int>(coart) * 0x10000) + (static_cast<int>(voicing) * 0x1000)
-             + (static_cast<int>(manner) * 0x100) + (static_cast<int>(place) * 0x10)
-             + static_cast<int>(Type::consonant);
-
-        std::string srel = getStrRel(release);
-        std::string sart = getStrArt(art);
-        std::string scoart = getStrCoart(coart);
-        std::string svoic = getStrVoicing(voicing);
-
-        desc += (syllabic ? "Syllabic " : "") + std::string(srel != "" ? srel + " " : "") + (sart != "" ? sart + " " : "")
-                + (scoart != "" ? scoart + " " : "") + (svoic != "" ? svoic + " " : "") + getStrPlace(place) + " " + getStrManner(manner);
+        id = calc_id();
+        desc = update_desc();
     }
 
     Consonant() {}
 
     bool operator==(const Consonant& consonant) {
-        return this->getId() == consonant.getId() ? true : false;
+        return this->get_id() == consonant.get_id() ? true : false;
     }
 
-    Place getPlace() const { return place; }
-    Manner getManner() const { return manner; }
-    Voicing getVoicing() const { return voicing; }
-    Coarticulation getCoart() const { return coart; }
-    Articulation getArt() const { return art; }
-    Release getRelease() const { return release; }
+    Airstream get_airstream() const { return airstream; }
+    Articulation get_pri_art() const { return pri_art; }
+    Articulation get_sec_art() const { return sec_art; }
+    Manner get_manner() const { return manner; }
+    Release get_release() const { return release; }
     float getProbOnset() const { return probOnset; }
     float getProbNucleus() const { return probNucleus; }
     float getProbCoda() const { return probCoda; }
-    bool isSyllabic() const { return syllabic; }
+
+    void set_symbol(std::string symbol) { this->symbol = symbol; }
+    void set_airstream(Airstream airstream) { this->airstream = airstream; id = calc_id(); desc = update_desc(); }
+    void set_pri_art(Articulation pri_art) { this->pri_art = pri_art; id = calc_id(); desc = update_desc(); }
+    void set_sec_art(Articulation sec_art) { this->sec_art = sec_art; id = calc_id(); desc = update_desc(); }
+    void set_manner(Manner manner) { this->manner = manner; id = calc_id(); desc = update_desc(); }
+    void set_voicing(Voicing voicing) { this->voicing = voicing; id = calc_id(); desc = update_desc(); }
+    void set_release(Release release) { this->release = release; id = calc_id(); desc = update_desc(); }
 };
 
 #endif

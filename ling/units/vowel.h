@@ -5,86 +5,90 @@
 
 /* Tongue height during vowel production */
 enum class Height {
-    close,
-    nearClose,
-    closeMid,
+    close = 1,
+    near_close,
+    close_mid,
     mid,
-    openMid,
-    nearOpen,
+    open_mid,
+    near_open,
     open
 };
 
 /* Tongue position during vowel production */
 enum class Backness {
-    front,
+    front = 1,
     central,
     back
 };
 
-// Vowel lip rounding
-enum class Rounding {
-    unrounded,
-    lessRounded,
-    rounded,
-    moreRounded
+/* Represents vowel length as a contrastive feature */
+enum class Length {
+    extra_short = 1,
+    len_short,
+    half_long,
+    len_long
 };
 
-enum class TongueRoot {
-    retracted = 1,
-    advanced
-};
-
+/* Represents a vowel */
 class Vowel : public Phoneme {
 private:
     Height height;
     Backness backness;
-    Rounding rounding;
-    Coarticulation coart;
-    TongueRoot root;
+    Length length;
+    bool rounded;
+    bool nasalized;
+    bool rhotic;
+
     float probNucleus;      // Probabilty of phoneme occuring in nucleus
 
-    std::string getStrHeight(Height) const;
-    std::string getStrBackness(Backness) const;
-    std::string getStrRounding(Rounding) const;
-    std::string getStrTngRoot(TongueRoot) const;
+    unsigned int calc_id() const;
+
+    std::string get_height_as_str(Height) const;
+    std::string get_backness_as_str(Backness) const;
+    std::string get_length_as_str(Length) const;
+    std::string update_desc() const;
 public:
-    Vowel(std::string symbol, float probNucleus, Height height, Backness backness, Voicing voicing,
-          Rounding rounding, Coarticulation coart, TongueRoot root) {
+    Vowel(std::string symbol, Height height, Backness backness, bool rounded,
+          Voicing voicing, Length length, bool nasalized, bool rhotic,
+          float probNucleus) {
 
         type = Type::vowel;
         this->symbol = symbol;
-        this->probNucleus = probNucleus;
         this->height = height;
         this->backness = backness;
-        this->rounding = rounding;
-        this->coart = coart;
-        this->root = root;
+        this->rounded = rounded;
+        this->voicing = voicing;
+        this->length = length;
+        this->nasalized = nasalized,
+        this->rhotic = rhotic;
+        this->probNucleus = probNucleus;
 
-        // |Tongue Root|Coarticulation|Rounding|Voicing|Part|Height|Type
-        id = (static_cast<int>(root) * 0x1000000) + (static_cast<int>(coart) * 0x100000)
-            + (static_cast<int>(rounding) * 0x10000) + (static_cast<int>(voicing) * 0x1000) + (static_cast<int>(backness) * 0x100)
-            + (static_cast<int>(height) * 0x10) + static_cast<int>(Type::vowel);
+        id = calc_id();
 
-        std::string svoic = getStrVoicing(voicing);
-        std::string scoart = getStrCoart(coart);
-        std::string stng = getStrTngRoot(root);
-
-        desc += (stng != "" ? stng + " " : "" ) + (scoart != "" ? scoart + " " : "" ) + (svoic != "Voiced" ? svoic + " " : "" )
-             + getStrHeight(height) + " " + getStrBackness(backness) + " " + getStrRounding(rounding) + " Vowel";
+        desc = update_desc();
     }
 
     Vowel() {}
 
     bool operator==(const Vowel& vowel) {
-        return this->getId() == vowel.getId() ? true : false;
+        return this->get_id() == vowel.get_id() ? true : false;
     }
 
-    Height getHeight() const { return height; }
-    Backness getBackness() const { return backness; }
-    Rounding getRounding() const { return rounding; }
-    Coarticulation getCoart() const { return coart; }
-    TongueRoot getTngRoot() const { return root; }
+    Height get_height() const { return height; }
+    Backness get_backness() const { return backness; }
+    bool is_rounded() const { return rounded; }
+    Length is_length() const { return length; }
+    bool is_nasalized() const { return nasalized; }
+    bool is_rhotic() const { return rhotic; }
+
     float getProbNucleus() const { return probNucleus; }
+
+    void set_height(Height height) { this->height = height; id = calc_id(); desc = update_desc(); }
+    void set_backness(Backness backness) { this->backness = backness; id = calc_id(); desc = update_desc(); }
+    void set_rounded(bool rounded) { this->rounded = rounded; id = calc_id(); desc = update_desc(); }
+    void set_length(Length length) { this->length = length; id = calc_id(); desc = update_desc(); }
+    void set_nasalized(bool nasalized) { this->nasalized = nasalized; id = calc_id(); desc = update_desc(); }
+    void set_rhotic(bool rhotic) { this->rhotic = rhotic; id = calc_id(); desc = update_desc(); }
 };
 
 #endif

@@ -1,273 +1,184 @@
 #include <iostream>
+#include <functional>
 
 #include "../ling/units/soundsystem.h"
-#include "../ling/word/root_morph.h"
 
-static RootMorph ruleVoicing(std::map<unsigned int, Consonant>&,
-                             RootMorph&);
+/*
+ * Given a vector of phonemes, print out their symbols
+ */
+static std::string getRepresentation(std::map<unsigned int, Consonant>&,
+                                     std::map<unsigned int, Vowel>&,
+                                     std::vector<unsigned int>&);
 
-static std::vector<Consonant> applyVRule(std::vector<Consonant>&,
-                                         std::map<unsigned int, Consonant>&);
-
-static RootMorph rulePlosive(std::map<unsigned int, Consonant>&,
-                             RootMorph&);
+/*
+ * Applies an assimilation rule to a sequence of phonemes
+ *
+ * cur_class -> res_class / prev_class _ next_class
+ *
+ */
+static std::vector<unsigned int> assim_rule(std::map<unsigned int, Consonant>&,
+                                            std::map<unsigned int, Vowel>&,
+                                            unsigned int,
+                                            unsigned int,
+                                            unsigned int,
+                                            unsigned int,
+                                            std::vector<unsigned int>&);
 
 int main() {
-    SoundSystem soundSystem("preset00");
+    SoundSystem soundSystem("preset01");
     soundSystem.load();
 
-    std::map<unsigned int, Consonant> consonants = soundSystem.getConsonants();
-    std::map<unsigned int, Vowel> vowels = soundSystem.getVowels();
-    std::map<std::string, unsigned int> ids = soundSystem.getIds();
+    std::map<unsigned int, Consonant> consonants = soundSystem.get_consonants();
+    std::map<unsigned int, Vowel> vowels = soundSystem.get_vowels();
+    std::map<std::string, unsigned int> ids = soundSystem.get_ids();
+
+    // high vowel -> voiceless / voiceless consonant _ voiceless consonant
+    auto voicing_rule = std::bind(assim_rule, consonants, vowels,
+                                  0x20012, 0x10012, 0x100001, 0x100001, std::placeholders::_1);
+
+    // plosive -> nasal / _ nasal consonant
+    auto plosive_rule = std::bind(assim_rule, consonants, vowels,
+                                  0x10011, 0x20011, 0x0, 0x20011, std::placeholders::_1);
 
     /*
      * Use ids map to retrieve phoneme given a symbol,
      * since ids may change in the future
      */
+    std::vector<unsigned int> word1 = {
+        ids["s"],
+        ids["u"],
+        ids["t"],
+        ids["u"],
+        ids["j"],
+        ids["i"]
+    }; // sutuji
 
-    std::vector<Syllable> syl1 {
-        Syllable(
-            std::vector<Consonant> {
-                consonants[ids["s"]],
-                consonants[ids["k"]]
-            },
-            std::vector<Vowel> {
-                vowels[ids["æ"]],
-            },
-            std::vector<Consonant> {
-                consonants[ids["d"]],
-                consonants[ids["s"]]
-            },
-            std::vector<Suprasegmental>()
-        )
-    };
+    std::vector<unsigned int> word2 = {
+        ids["k"],
+        ids["u"],
+        ids["ʒ"],
+        ids["i"],
+        ids["n"]
+    }; // kuʒin
 
-    std::vector<Syllable> syl2 {
-        Syllable(
-            std::vector<Consonant> {
-                consonants[ids["t"]],
-            },
-            std::vector<Vowel> {
-                vowels[ids["æ"]],
-            },
-            std::vector<Consonant> {
-                consonants[ids["t"]],
-            },
-            std::vector<Suprasegmental>()
-        ),
-        Syllable(
-            std::vector<Consonant> {
-                consonants[ids["s"]],
-            },
-            std::vector<Vowel> {
-                vowels[ids["ə"]],
-            },
-            std::vector<Consonant> {
-                consonants[ids["s"]],
-            },
-            std::vector<Suprasegmental>()
-        )
-    };
+    std::vector<unsigned int> word3 = {
+        ids["z"],
+        ids["o"],
+        ids["s"],
+        ids["i"],
+        ids["k"],
+        ids["ɑ"]
+    }; // zosikɑ
 
-    std::vector<Syllable> syl3 {
-        Syllable(
-            std::vector<Consonant> {
-                consonants[ids["s"]],
-            },
-            std::vector<Vowel> {
-                vowels[ids["o"]],
-                vowels[ids["ʊ"]]
-            },
-            std::vector<Consonant> {
-                consonants[ids["g"]],
-                consonants[ids["s"]]
-            },
-            std::vector<Suprasegmental>()
-        ),
-        Syllable(
-            std::vector<Consonant> {
-                consonants[ids["d"]],
-            },
-            std::vector<Vowel> {
-                vowels[ids["i"]],
-            },
-            std::vector<Consonant>(),
-            std::vector<Suprasegmental>()
-        )
-    };
+    std::vector<unsigned int> word4 = {
+        ids["v"],
+        ids["ɛ"],
+        ids["d"],
+        ids["n"],
+        ids["ɛ"],
+        ids["l"]
+    }; // vednɛl
 
-    std::vector<Syllable> syl4 {
-        Syllable(
-            std::vector<Consonant> {
-                consonants[ids["ŋ"]],
-            },
-            std::vector<Vowel> {
-                vowels[ids["ɑ"]],
-            },
-            std::vector<Consonant> {
-                consonants[ids["m"]],
-            },
-            std::vector<Suprasegmental>()
-        ),
-        Syllable(
-            std::vector<Consonant> {
-                consonants[ids["n"]],
-            },
-            std::vector<Vowel> {
-                vowels[ids["ə"]],
-            },
-            std::vector<Consonant> {
-                consonants[ids["l"]],
-            },
-            std::vector<Suprasegmental>()
-        )
-    };
-
-    std::vector<Syllable> syl5 {
-        Syllable(
-            std::vector<Consonant> {
-                consonants[ids["θ"]],
-            },
-            std::vector<Vowel> {
-                vowels[ids["o"]],
-                vowels[ids["ʊ"]]
-            },
-            std::vector<Consonant> {
-                consonants[ids["b"]],
-            },
-            std::vector<Suprasegmental>()
-        ),
-        Syllable(
-            std::vector<Consonant> {
-                consonants[ids["n"]],
-            },
-            std::vector<Vowel> {
-                vowels[ids["ɑ"]],
-            },
-            std::vector<Consonant>(),
-            std::vector<Suprasegmental>()
-        )
-    };
-
-    RootMorph morpheme1 (syl1, ConLexCat::noun, true); // skæds
-    RootMorph morpheme2 (syl2, ConLexCat::noun, true); // tætsəs
-    RootMorph morpheme3 (syl3, ConLexCat::noun, true); // soʊgzdi
-    RootMorph morpheme4 (syl4, ConLexCat::noun, true); // ŋɑmnəl
-    RootMorph morpheme5 (syl5, ConLexCat::noun, true); // θoʊbnɑ
+    std::vector<unsigned int> word5 = {
+        ids["s"],
+        ids["o"],
+        ids["b"],
+        ids["n"],
+        ids["i"]
+    }; // sobni
 
     // Apply voicing rule
-    RootMorph rep1 = ruleVoicing(consonants, morpheme1); // skædz
-    RootMorph rep2 = ruleVoicing(consonants, morpheme2); // tætsəs
-    RootMorph rep3 = ruleVoicing(consonants, morpheme3); // soʊgzdi
+    std::vector<unsigned int> rep1 = voicing_rule(word1); // su̥tuji
+    std::vector<unsigned int> rep2 = voicing_rule(word2); // kuʒin
+    std::vector<unsigned int> rep3 = voicing_rule(word3); // zosi̥kɑ
 
     // Apply plosive rule
-    RootMorph rep4 = rulePlosive(consonants, morpheme4); // gɑmdəl
-    RootMorph rep5 = rulePlosive(consonants, morpheme5); // θoʊbdɑ
+    std::vector<unsigned int> rep4 = plosive_rule(word4); // vɛnnɛl
+    std::vector<unsigned int> rep5 = plosive_rule(word5); // somni
 
-    std::cout << "/s/ --> [z] / C_\n"
-              << "/" << morpheme1.getPhonemic() << "/ --> ["
-              << rep1.getPhonemic()  << "]\n"
-              << "/" << morpheme2.getPhonemic() << "/ --> ["
-              << rep2.getPhonemic()  << "]\n"
-              << "/" << morpheme3.getPhonemic() << "/ --> ["
-              << rep3.getPhonemic()  << "]\n";
+    std::cout << "high vowel -> voiceless / voiceless consonant _ voiceless consonant\n"
+              << "/" << getRepresentation(consonants, vowels, word1) << "/ --> ["
+              << getRepresentation(consonants, vowels, rep1)  << "]\n"
+              << "/" << getRepresentation(consonants, vowels, word2) << "/ --> ["
+              << getRepresentation(consonants, vowels, rep2)  << "]\n"
+              << "/" << getRepresentation(consonants, vowels, word3) << "/ --> ["
+              << getRepresentation(consonants, vowels, rep3)  << "]\n";
 
-    std::cout << "\n/nasal/ --> [plosive] / _V\n"
-              << "/" << morpheme4.getPhonemic() << "/ --> ["
-              << rep4.getPhonemic() << "]\n"
-              << "/" << morpheme5.getPhonemic() << "/ --> ["
-              << rep5.getPhonemic() << "]\n";
+    std::cout << "\nplosive -> nasal / _ nasal consonant\n"
+              << "/" << getRepresentation(consonants, vowels, word4) << "/ --> ["
+              << getRepresentation(consonants, vowels, rep4)  << "]\n"
+              << "/" << getRepresentation(consonants, vowels, word5) << "/ --> ["
+              << getRepresentation(consonants, vowels, rep5)  << "]\n";
 
     return 0;
 }
 
-/* Voiceless alveolar fricative becomes voiced if it occurs after a voiced consonant
- * /s/ --> [z] / C_
- *
- * Consonants, at this point, can only occur in the onset and coda,
- * so ignore the nucleus
- */
-static RootMorph ruleVoicing(std::map<unsigned int, Consonant>& consonants,
-                            RootMorph& input) {
+static std::string getRepresentation(std::map<unsigned int, Consonant>& consonants,
+                                     std::map<unsigned int, Vowel>& vowels,
+                                     std::vector<unsigned int>& word) {
 
-    RootMorph output;
-    int numSyl = input.getNumSyl();
+    std::string output = "";
 
-    // Loop for each syllable
-    for(int i = 0; i < numSyl; i++) {
-        // First grab old onset and coda
-        std::vector<Consonant> oldOnset = input.getSyllables()[i].getOnset();
-        std::vector<Consonant> oldCoda = input.getSyllables()[i].getCoda();
+    for(const auto& phoneme: word) {
 
-        // Create new onset and coda with rule applied
-        std::vector<Consonant> onset = applyVRule(oldOnset, consonants);
-        std::vector<Consonant> coda = applyVRule(oldCoda, consonants);
-
-        output.addSyllable(Syllable(onset, input.getSyllables()[i].getNucleus(),
-                                    coda, std::vector<Suprasegmental>()));
-    }
-    return output;
-}
-
-/**
- * Apply voicing rule on an onset or coda
- * The purpose of this function is to avoid code duplication
- */
-static std::vector<Consonant> applyVRule(std::vector<Consonant>& input, std::map<unsigned int, Consonant>& consonants) {
-    std::vector<Consonant> output;
-    int size = input.size();
-
-    for (int i = 0; i < size; i++) {
-        unsigned int curId = input[i].getId();
-
-        /* Check if there is a phoneme before current position,
-        * if that phoneme is voiced, and
-        * if current phoneme is a voiceless alveolar fricative.
-        *
-        * If true, add voiced alveolar fricative to new coda
-        */
-        if (i - 1 >= 0 && input[i - 1].getVoicing() == Voicing::voiced
-            && curId % 0x10000 == 0x0731) {
-
-            curId += 0x1000;
+        // Calculate if phoneme is consonant or vowel
+        if(phoneme % 0x10 == 1) {
+            output += consonants[phoneme].get_symbol();
+        } else {
+            output += vowels[phoneme].get_symbol();
         }
-        output.push_back(consonants[curId]);
     }
 
     return output;
 }
 
-/* Nasal becomes plosive if it occurs before a vowel
- * /nasal/ --> [plosive] / _V
- *
- * Here, only onsets can occur before a vowel, so ignore coda and nucleus
- */
-static RootMorph rulePlosive(std::map<unsigned int, Consonant>& consonants,
-                            RootMorph& input) {
+static std::vector<unsigned int> assim_rule(std::map<unsigned int, Consonant>& consonants,
+                                            std::map<unsigned int, Vowel>& vowels,
+                                            unsigned int cur_class,
+                                            unsigned int res_class,
+                                            unsigned int prev_class,
+                                            unsigned int next_class,
+                                            std::vector<unsigned int>& word) {
 
-    RootMorph output;
-    int numSyl = input.getNumSyl();
+    std::vector<unsigned int> output;
+    int len = word.size();
 
-    // Loop for each syllable
-    for(int i = 0; i < numSyl; i++) {
-        std::vector<Consonant> onset = input.getSyllables()[i].getOnset();
-        std::vector<Consonant> coda = input.getSyllables()[i].getCoda();
+    for(int i = 0; i < len; i ++) {
+        unsigned int cur_id = word[i], new_id = 0x0;
 
-        //Check if final consonant in onset is a nasal
-        if (onset.back().getManner() == Manner::nasal) {
+        // Apply rule
+        if (prev_class != 0 && next_class != 0) { // Environment: prev_class _ next_class
+            if (i - 1 >= 0
+                && i + 1 < len
+                && (word[i - 1] & prev_class) == prev_class
+                && (word[i + 1] & next_class) == next_class
+                && (cur_id & cur_class) == cur_class) {
 
-            // Turn plosive
-            unsigned int id = onset.back().getId() + ((static_cast<int>(Manner::plosive)
-                                                   - static_cast<int>(Manner::nasal)) * 0x100);
+                    new_id = cur_id + (res_class - cur_class);
+            }
+        } else if (prev_class != 0) { // Environment: prev_class _
+            if (i - 1 >= 0
+                && (word[i - 1] & prev_class) == prev_class
+                && (cur_id & cur_class) == cur_class) {
 
-            // Change id only if corresponding plosive exists
-            if (consonants.find(id) != consonants.end()) {
-                onset.back() = consonants[id];
+                    new_id = cur_id + (res_class - cur_class);
+            }
+        } else { // Environment: _ next_class
+            if (i + 1 < len
+                && (word[i + 1] & next_class) == next_class
+                && (cur_id & cur_class) == cur_class) {
+
+                    new_id = cur_id + (res_class - cur_class);
             }
         }
 
-        output.addSyllable(Syllable(onset, input.getSyllables()[i].getNucleus(),
-                                    coda, std::vector<Suprasegmental>()));
+        // Only push id to output if id exists in the current sound system
+        if(consonants.find(new_id) != consonants.end() || vowels.find(new_id) != vowels.end()) {
+            output.push_back(new_id);
+        } else {
+            output.push_back(cur_id);
+        }
     }
+
     return output;
 }

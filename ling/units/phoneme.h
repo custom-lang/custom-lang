@@ -3,45 +3,34 @@
 
 #include <string>
 
-// Start at 1, since 0 is reserved for suprasegmentals
 enum class Type {
     consonant = 1,
     vowel
 };
 
 enum class Voicing {
-    voiceless,
+    voiceless = 1,
     voiced
-};
-
-// Secondary Articulation
-enum class Coarticulation {
-    labialized = 1,
-    palatalized,
-    velarized,
-    pharyngealized,
-    velPha,            //Velarized or Pharyngealized
-    rhoticized,
-    nasalized
 };
 
 /* Represents a discrete unit of sound */
 class Phoneme {
 protected:
     Type type;
+    Voicing voicing;
     unsigned int id;
     std::string symbol;
     std::string desc;
-    Voicing voicing;
 
-    std::string getStrVoicing (Voicing) const;
-    std::string getStrCoart (Coarticulation) const;
+    virtual unsigned int calc_id() const = 0;
+    virtual std::string update_desc() const = 0;
+    std::string get_voi_as_str(Voicing) const;
 public:
-    Type getType() const { return type; }
-    unsigned int getId() const { return id; }
-    std::string getSymbol() const { return symbol; }
-    std::string getDesc() const { return desc; }
-    Voicing getVoicing() const { return voicing; }
+    Type get_type() const { return type; }
+    Voicing get_voicing() const { return voicing; }
+    unsigned int get_id() const { return id; }
+    std::string get_symbol() const { return symbol; }
+    std::string get_desc() const { return desc; }
 };
 
 #endif

@@ -1,58 +1,95 @@
 #include "vowel.h"
 #include <map>
 
-std::string Vowel::getStrHeight(Height height) const{
-    static std::map<Height, std::string> heights {
-        {Height::close, "Close"},
-        {Height::nearClose, "Near-Close"},
-        {Height::closeMid, "Close-Mid"},
-        {Height::mid, "Mid"},
-        {Height::openMid, "Open-Mid"},
-        {Height::nearOpen, "Near-Open"},
-        {Height::open, "Open"}
-    };
-
-    std::map<Height, std::string>::iterator it;
-
-    it = heights.find(height);
-    return it != heights.end() ? it->second : "NA";
+/*
+ * Calculate Vowel ID
+ *
+ * FORMAT
+ *  Index:   |0     |1        |2     |3      |4      |5       |6     |7
+ *  Feature: |Rhotic|Nasalized|Length|Voicing|Rounded|Backness|Height|Type
+ */
+unsigned int Vowel::calc_id() const {
+    return ((static_cast<int>(rhotic) + 1) * 0x10000000) + ((static_cast<int>(nasalized) + 1) * 0x1000000)
+            + (static_cast<int>(length) * 0x100000) + (static_cast<int>(voicing) * 0x10000)
+            + ((static_cast<int>(rounded) + 1 )* 0x1000) + (static_cast<int>(backness) * 0x100)
+            + (static_cast<int>(height) * 0x10) + static_cast<int>(Type::vowel);
 }
 
-std::string Vowel::getStrBackness(Backness back) const{
-    static std::map<Backness, std::string> backs {
-        {Backness::front, "Front"},
-        {Backness::central, "Central"},
-        {Backness::back, "Back"}
-    };
+std::string Vowel::update_desc() const {
+    std::string desc = std::string(voicing == Voicing::voiceless ? "Voiceless " : "") +
+            + (nasalized ? "Nasalized " : "") + (rhotic ? "Rhotic " : "")
+            + (length != Length::len_short ? get_length_as_str(length) + " " : "")
+            + get_height_as_str(height) + " " + get_backness_as_str(backness) + " "
+            + (rounded ? "Rounded" : "Unrounded") + " Vowel";
 
-    std::map<Backness, std::string>::iterator it;
-
-    it = backs.find(back);
-    return it != backs.end() ? it->second : "NA";
+    return desc;
 }
 
-std::string Vowel::getStrRounding(Rounding roun) const{
-    static std::map<Rounding, std::string> rouns {
-        {Rounding::unrounded, "Unrounded"},
-        {Rounding::lessRounded, "Less-rounded"},
-        {Rounding::rounded, "Rounded"},
-        {Rounding::moreRounded, "More-rounded"}
-    };
+std::string Vowel::get_height_as_str(Height height) const {
+    std::string str;
+    switch (height) {
+        case Height::close:
+            str = "Close";
+            break;
+        case Height::near_close:
+            str = "Near-Close";
+            break;
+        case Height::close_mid:
+            str = "Close-Mid";
+            break;
+        case Height::mid:
+            str = "Mid";
+            break;
+        case Height::open_mid:
+            str = "Open-Mid";
+            break;
+        case Height::near_open:
+            str = "Near-Open";
+            break;
+        case Height::open:
+            str = "Open";
+            break;
+        default:
+            str = "NA";
+    }
 
-    std::map<Rounding, std::string>::iterator it;
-
-    it = rouns.find(roun);
-    return it != rouns.end() ? it->second : "NA";
+    return str;
 }
 
-std::string Vowel::getStrTngRoot(TongueRoot ton) const{
-    static std::map<TongueRoot, std::string> tons {
-        {TongueRoot::retracted, "Retracted"},
-        {TongueRoot::advanced, "Advanced"}
-    };
+std::string Vowel::get_backness_as_str(Backness backness) const {
+    std::string str;
+    switch (backness) {
+        case Backness::front:
+            str = "Front";
+            break;
+        case Backness::central:
+            str = "Central";
+            break;
+        case Backness::back:
+            str = "Back";
+            break;
+        default:
+            str = "NA";
+    }
 
-    std::map<TongueRoot, std::string>::iterator it;
+    return str;
+}
 
-    it = tons.find(ton);
-    return it != tons.end() ? it->second : "";
+std::string Vowel::get_length_as_str(Length length) const {
+    std::string str;
+    switch (length) {
+        case Length::extra_short:
+            str = "Extra-Short";
+            break;
+        case Length::half_long:
+            str = "Half-Long";
+            break;
+        case Length::len_long:
+            str = "Long";
+            break;
+        default:
+            str = "";
+    }
+
+    return str;
 }
