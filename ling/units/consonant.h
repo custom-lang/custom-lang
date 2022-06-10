@@ -61,11 +61,6 @@ private:
     Manner manner;
     Release release;
 
-    // Weights
-    float probOnset;        // Probabilty of phoneme occuring in onset
-    float probNucleus;      // Probabilty of phoneme occuring in nucleus if syllabic
-    float probCoda;         // Probabilty of phoneme occuring in coda
-
     unsigned int calc_id() const;
 
     // Helpers for creating consonant description from features
@@ -77,8 +72,7 @@ private:
 public:
     Consonant(std::string symbol,
               Airstream airstream, Articulation pri_art, Articulation sec_art,
-              Manner manner, Voicing voicing, Release release,
-              float probOnset, float probNucleus, float probCoda) {
+              Manner manner, Voicing voicing, Release release) {
 
         type = Type::consonant;
         this->symbol = symbol;
@@ -88,10 +82,6 @@ public:
         this->manner = manner;
         this->voicing = voicing;
         this->release = release;
-
-        this->probOnset = probOnset;
-        this->probNucleus = probNucleus;
-        this->probCoda = probCoda;
 
         id = calc_id();
         desc = update_desc();
@@ -108,9 +98,6 @@ public:
     Articulation get_sec_art() const { return sec_art; }
     Manner get_manner() const { return manner; }
     Release get_release() const { return release; }
-    float getProbOnset() const { return probOnset; }
-    float getProbNucleus() const { return probNucleus; }
-    float getProbCoda() const { return probCoda; }
 
     void set_symbol(std::string symbol) { this->symbol = symbol; }
     void set_airstream(Airstream airstream) { this->airstream = airstream; id = calc_id(); desc = update_desc(); }

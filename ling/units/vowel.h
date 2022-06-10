@@ -39,8 +39,6 @@ private:
     bool nasalized;
     bool rhotic;
 
-    float probNucleus;      // Probabilty of phoneme occuring in nucleus
-
     unsigned int calc_id() const;
 
     std::string get_height_as_str(Height) const;
@@ -49,8 +47,7 @@ private:
     std::string update_desc() const;
 public:
     Vowel(std::string symbol, Height height, Backness backness, bool rounded,
-          Voicing voicing, Length length, bool nasalized, bool rhotic,
-          float probNucleus) {
+          Voicing voicing, Length length, bool nasalized, bool rhotic) {
 
         type = Type::vowel;
         this->symbol = symbol;
@@ -61,7 +58,6 @@ public:
         this->length = length;
         this->nasalized = nasalized,
         this->rhotic = rhotic;
-        this->probNucleus = probNucleus;
 
         id = calc_id();
 
@@ -80,8 +76,6 @@ public:
     Length is_length() const { return length; }
     bool is_nasalized() const { return nasalized; }
     bool is_rhotic() const { return rhotic; }
-
-    float getProbNucleus() const { return probNucleus; }
 
     void set_height(Height height) { this->height = height; id = calc_id(); desc = update_desc(); }
     void set_backness(Backness backness) { this->backness = backness; id = calc_id(); desc = update_desc(); }

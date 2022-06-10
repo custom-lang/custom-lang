@@ -30,23 +30,19 @@ bool SoundSystem::save() {
         return true;
     }
 
-    f_vowels << "symbol,id,nucleus weight\n";
-    f_consonants << "symbol,id,onset weight,nucleus weight,coda weight\n";
+    f_vowels << "symbol,id\n";
+    f_consonants << "symbol,id\n";
 
     // Save consonants
     for (auto const& phon: consonants) {
         f_consonants << phon.second.get_symbol() << ","
-                    << std::hex << phon.second.get_id() << ","
-                    << std::dec << phon.second.getProbOnset() << ","
-                    << phon.second.getProbNucleus() << ","
-                    << phon.second.getProbCoda() << "\n";
+                    << std::hex << phon.second.get_id() << "\n";
     }
 
     // Save vowels
     for (auto const& phon: vowels) {
         f_vowels << phon.second.get_symbol() << ","
-                << std::hex << phon.second.get_id() << ","
-                << std::dec << phon.second.getProbNucleus() << "\n";
+                << std::hex << phon.second.get_id() << "\n";
     }
 
     f_consonants.close();
@@ -103,10 +99,10 @@ void SoundSystem::read_file(std::ifstream& file, int type) {
 
         /*
          * Check if the line has the correct amount of values.
-         * Each file has at least 3 arguments per line.
+         * Each file has at least 2 arguments per line.
          * Extra values will be ignored and eventually deleted when writing over the file.
          */
-        if (tokens.size() < 3) {
+        if (tokens.size() < 2) {
             std::cerr << "Invalid amount of values: " << tokens.size() << "\n";
             continue; // Skip to next line
         }
@@ -126,40 +122,14 @@ void SoundSystem::read_file(std::ifstream& file, int type) {
             continue; // Skip to next line
         }
 
-        /*
-         * Try to convert weights from string to float
-         *
-         * For vowels:
-         *  weight1 = nucleus weight
-         * For consonants:
-         *  weight1 = onset weight
-         *  weight2 = nucleus weight
-         *  weight3 = coda weight
-         * For suprasegmentals:
-         *  weight1 = suprasegmental weight
-         */
-        float weight1, weight2, weight3;
-        try {
-            if (type == 1) {
-                weight1 = std::stof(tokens[2], nullptr);
-                weight2 = std::stof(tokens[3], nullptr); // NOTE: Will not be used until syllabic consonants are supported
-                weight3 = std::stof(tokens[4], nullptr);
-            } else {
-                weight1 = std::stof(tokens[2], nullptr);
-            }
-        } catch (...) {
-            std::cerr << "Failed to convert weight(s) for " + tokens[0] + " into float(s)\n";
-            continue; // Skip to next line
-        }
-
         // Insert based on type
         if (type == 1) {
-            if (insert_consonant(tokens[0], id, weight1, weight2, weight3)) {
+            if (insert_consonant(tokens[0], id)) {
                 std::cerr << "Could not add the consonant [" << tokens[0]
                           << "] with id " << std::hex << id << "\n";
             }
         } else {
-            if (insert_vowel(tokens[0], id, weight1)) {
+            if (insert_vowel(tokens[0], id)) {
                 std::cerr << "Could not add the vowel [" << tokens[0]
                           << "] with id " << std::hex << id << "\n";
             }
@@ -167,7 +137,7 @@ void SoundSystem::read_file(std::ifstream& file, int type) {
     }
 }
 
-bool SoundSystem::insert_consonant(std::string symbol, unsigned int id, float probOnset, float probNucleus, float probCoda) {
+bool SoundSystem::insert_consonant(std::string symbol, unsigned int id) {
 
     // Check if consonant id
     if (id % 0x10 != static_cast<int>(Type::consonant)) {
@@ -192,13 +162,7 @@ bool SoundSystem::insert_consonant(std::string symbol, unsigned int id, float pr
 
         // Insert Consonant
         Consonant consonant(symbol, air, pri_art, sec_art,
-                            manner, voicing, release,
-                            probOnset, probNucleus, probCoda);
-
-        probOnsets.push_back(probOnset);
-        probCodas.push_back(probCoda);
-        onsetIds.push_back(id);
-        codaIds.push_back(id);
+                            manner, voicing, release);
 
         consonants.insert(std::pair<unsigned int, Consonant>(id, consonant));
         ids.insert(std::pair<std::string, unsigned int>(symbol, id));
@@ -209,7 +173,7 @@ bool SoundSystem::insert_consonant(std::string symbol, unsigned int id, float pr
     }
 }
 
-bool SoundSystem::insert_vowel(std::string symbol, unsigned int id, float probNucleus) {
+bool SoundSystem::insert_vowel(std::string symbol, unsigned int id) {
 
     // Check if vowel id
     if (id % 0x10 != static_cast<int>(Type::vowel)) {
@@ -236,10 +200,7 @@ bool SoundSystem::insert_vowel(std::string symbol, unsigned int id, float probNu
 
         // Insert vowel
         Vowel vowel(symbol, height, backness, (bool)rounded, voicing,
-                    length, (bool)nasalized, (bool)rhotic, probNucleus);
-
-        probNuclei.push_back(probNucleus);
-        nucleusIds.push_back(id);
+                    length, (bool)nasalized, (bool)rhotic);
 
         vowels.insert(std::pair<unsigned int, Vowel>(id, vowel));
         ids.insert(std::pair<std::string, unsigned int>(symbol, id));

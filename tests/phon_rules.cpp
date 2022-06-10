@@ -6,9 +6,9 @@
 /*
  * Given a vector of phonemes, print out their symbols
  */
-static std::string getRepresentation(std::map<unsigned int, Consonant>&,
-                                     std::map<unsigned int, Vowel>&,
-                                     std::vector<unsigned int>&);
+static std::string get_representation(std::map<unsigned int, Consonant>&,
+                                      std::map<unsigned int, Vowel>&,
+                                      std::vector<unsigned int>&);
 
 /*
  * Applies an assimilation rule to a sequence of phonemes
@@ -97,25 +97,25 @@ int main() {
     std::vector<unsigned int> rep5 = plosive_rule(word5); // somni
 
     std::cout << "high vowel -> voiceless / voiceless consonant _ voiceless consonant\n"
-              << "/" << getRepresentation(consonants, vowels, word1) << "/ --> ["
-              << getRepresentation(consonants, vowels, rep1)  << "]\n"
-              << "/" << getRepresentation(consonants, vowels, word2) << "/ --> ["
-              << getRepresentation(consonants, vowels, rep2)  << "]\n"
-              << "/" << getRepresentation(consonants, vowels, word3) << "/ --> ["
-              << getRepresentation(consonants, vowels, rep3)  << "]\n";
+              << "/" << get_representation(consonants, vowels, word1) << "/ --> ["
+              << get_representation(consonants, vowels, rep1)  << "]\n"
+              << "/" << get_representation(consonants, vowels, word2) << "/ --> ["
+              << get_representation(consonants, vowels, rep2)  << "]\n"
+              << "/" << get_representation(consonants, vowels, word3) << "/ --> ["
+              << get_representation(consonants, vowels, rep3)  << "]\n";
 
     std::cout << "\nplosive -> nasal / _ nasal consonant\n"
-              << "/" << getRepresentation(consonants, vowels, word4) << "/ --> ["
-              << getRepresentation(consonants, vowels, rep4)  << "]\n"
-              << "/" << getRepresentation(consonants, vowels, word5) << "/ --> ["
-              << getRepresentation(consonants, vowels, rep5)  << "]\n";
+              << "/" << get_representation(consonants, vowels, word4) << "/ --> ["
+              << get_representation(consonants, vowels, rep4)  << "]\n"
+              << "/" << get_representation(consonants, vowels, word5) << "/ --> ["
+              << get_representation(consonants, vowels, rep5)  << "]\n";
 
     return 0;
 }
 
-static std::string getRepresentation(std::map<unsigned int, Consonant>& consonants,
-                                     std::map<unsigned int, Vowel>& vowels,
-                                     std::vector<unsigned int>& word) {
+static std::string get_representation(std::map<unsigned int, Consonant>& consonants,
+                                      std::map<unsigned int, Vowel>& vowels,
+                                      std::vector<unsigned int>& word) {
 
     std::string output = "";
 
