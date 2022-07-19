@@ -1,4 +1,5 @@
 #include "consonant.h"
+
 #include <map>
 
 /*
@@ -8,6 +9,7 @@
  *  Index:   |0      |1      |2     |3      |4      |5        |6   |
  *  Feature: |Release|Voicing|Manner|Sec Art|Pri Art|Airstream|Type|
  */
+
 unsigned int Consonant::calc_id() const {
     return (static_cast<int>(release) * 0x1000000) + (static_cast<int>(voicing) * 0x100000)
             + (static_cast<int>(manner) * 0x10000) + (static_cast<int>(sec_art) * 0x1000)

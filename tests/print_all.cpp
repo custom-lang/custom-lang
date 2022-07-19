@@ -1,7 +1,7 @@
 #include <iostream>
 #include <iomanip>
 
-#include "../ling/units/soundsystem.h"
+#include "soundsystem.h"
 
 int main() {
 

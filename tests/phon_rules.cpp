@@ -1,7 +1,7 @@
 #include <iostream>
 #include <functional>
 
-#include "../ling/units/soundsystem.h"
+#include "soundsystem.h"
 
 /*
  * Given a vector of phonemes, print out their symbols
@@ -67,17 +67,17 @@ int main() {
         ids["s"],
         ids["i"],
         ids["k"],
-        ids["ɑ"]
-    }; // zosikɑ
+        ids["a"]
+    }; // zosika
 
     std::vector<unsigned int> word4 = {
         ids["v"],
-        ids["ɛ"],
+        ids["e"],
         ids["d"],
         ids["n"],
-        ids["ɛ"],
+        ids["e"],
         ids["l"]
-    }; // vednɛl
+    }; // vednel
 
     std::vector<unsigned int> word5 = {
         ids["s"],
@@ -90,10 +90,10 @@ int main() {
     // Apply voicing rule
     std::vector<unsigned int> rep1 = voicing_rule(word1); // su̥tuji
     std::vector<unsigned int> rep2 = voicing_rule(word2); // kuʒin
-    std::vector<unsigned int> rep3 = voicing_rule(word3); // zosi̥kɑ
+    std::vector<unsigned int> rep3 = voicing_rule(word3); // zosi̥ka
 
     // Apply plosive rule
-    std::vector<unsigned int> rep4 = plosive_rule(word4); // vɛnnɛl
+    std::vector<unsigned int> rep4 = plosive_rule(word4); // vennel
     std::vector<unsigned int> rep5 = plosive_rule(word5); // somni
 
     std::cout << "high vowel -> voiceless / voiceless consonant _ voiceless consonant\n"

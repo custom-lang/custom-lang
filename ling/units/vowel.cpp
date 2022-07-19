@@ -1,4 +1,5 @@
 #include "vowel.h"
+
 #include <map>
 
 /*
@@ -8,6 +9,7 @@
  *  Index:   |0     |1        |2     |3      |4      |5       |6     |7
  *  Feature: |Rhotic|Nasalized|Length|Voicing|Rounded|Backness|Height|Type
  */
+
 unsigned int Vowel::calc_id() const {
     return ((static_cast<int>(rhotic) + 1) * 0x10000000) + ((static_cast<int>(nasalized) + 1) * 0x1000000)
             + (static_cast<int>(length) * 0x100000) + (static_cast<int>(voicing) * 0x10000)

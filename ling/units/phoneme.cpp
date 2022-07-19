@@ -1,6 +1,6 @@
-#include <map>
-
 #include "phoneme.h"
+
+#include <map>
 
 std::string Phoneme::get_voi_as_str(Voicing voicing) const {
     std::string str;
