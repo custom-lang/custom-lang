@@ -1,4 +1,3 @@
-#include <asm-generic/errno.h>
 #include <iostream>
 #include <sstream>
 #include <fstream>
