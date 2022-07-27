@@ -28,8 +28,8 @@ std::vector<std::vector<unsigned int>> create_sequences(std::map<unsigned int, C
                                                         std::vector<unsigned int>&);
 
 void print_ids(std::map<unsigned int, Consonant>&,
-            std::map<unsigned int, Vowel>&,
-            std::vector<std::vector<unsigned int>>&);
+               std::map<unsigned int, Vowel>&,
+               std::vector<std::vector<unsigned int>>&);
 
 bool in_class(unsigned int, unsigned int);
 
@@ -62,7 +62,7 @@ int main () {
 
     std::cout << "Commands:\n\n[onset|nucleus|coda] [natural class as ID]+\n"
               << "\tonset 0000011\t\t allow single pulmonic consonants to appear in the onset\n"
-              << "\tnucleus 11221172 12\t allow diphtongs of the form [ɑ][high vowel] to appear in the nucleus\n"
+              << "\tnucleus 11221172 12\t allow diphtongs of the form [a][high vowel] to appear in the nucleus\n"
               << "\n----------\n";
 
     while (!done) {
@@ -178,9 +178,9 @@ bool insert_sequences(std::string part, std::string lang, std::vector<std::vecto
 }
 
 std::vector<std::vector<unsigned int>> create_sequences(std::map<unsigned int, Consonant>& consonants,
-                    std::map<unsigned int, Vowel>& vowels,
-                    std::set<unsigned int>& ids,
-                    std::vector<unsigned int>& classes) {
+                                                        std::map<unsigned int, Vowel>& vowels,
+                                                        std::set<unsigned int>& ids,
+                                                        std::vector<unsigned int>& classes) {
 
     std::vector<std::vector<unsigned int>> phonemes;
 
@@ -218,8 +218,8 @@ std::vector<std::vector<unsigned int>> create_sequences(std::map<unsigned int, C
 }
 
 void print_ids(std::map<unsigned int, Consonant>& consonants,
-            std::map<unsigned int, Vowel>& vowels,
-            std::vector<std::vector<unsigned int>>& ids) {
+               std::map<unsigned int, Vowel>& vowels,
+               std::vector<std::vector<unsigned int>>& ids) {
 
     for (auto const& vec: ids) {
         for (auto const& id: vec) {
